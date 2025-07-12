@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Магічны шар прадказанняў</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #252525;
+      font-family: Arial, sans-serif;
+    }
+
+    #ball {
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #4a4a4a 0%, #000 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    #ball:active {
+      transform: scale(0.96);
+    }
+
+    #triangle {
+      width: 0;
+      height: 0;
+      border-left: 110px solid transparent;
+      border-right: 110px solid transparent;
+      border-bottom: 190px solid #1770d8;
+      position: relative;
+    }
+
+    #answer-box {
+      position: absolute;
+      top: 45px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 5px;
+    }
+
+    #answer {
+      font-size: 14px;
+      font-weight: bold;
+      color: white;
+      line-height: 1.2;
+      word-wrap: break-word;
+      opacity: 1;
+      transition: opacity 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div id="ball">
+    <div id="triangle">
+      <div id="answer-box">
+        <div id="answer">Націсні<br>на шар</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const answers = [
+     "Бясспрэчна", "Прадвырашана", "Ніякіх сумневаў", "Вызначана так", "Можаш спадзявацца", "Як я бачу – так", 
+"Верагодней за ўсё", "Добрыя перспектывы", "Знакі кажуць - так", "Так", "Пакуль не ясна, паспрабуй зноў", 
+"Спытай пазней", "Лепш не цяпер", "Цяпер нельга прадказаць", "Сканцэнтруйся і спытай зноў", 
+"Нават не думай", "Мой адказ - не", "Па маіх дадзеных - не", "Перспектывы не вельмі", "Вельмі сумнеўна","Тужык тут быў"
+    ];
+
+    const answerElem = document.getElementById("answer");
+    const ball = document.getElementById("ball");
+
+    ball.addEventListener("click", () => {
+      answerElem.style.opacity = 0;
+      setTimeout(() => {
+        const random = answers[Math.floor(Math.random() * answers.length)];
+        answerElem.innerHTML = random.length > 20 ? random.replace(" ", "<br>") : random;
+        answerElem.style.opacity = 1;
+      }, 250);
+    });
+  </script>
+</body>
+</html>
