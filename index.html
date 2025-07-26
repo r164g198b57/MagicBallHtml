@@ -4,95 +4,168 @@
   <meta charset="UTF-8" />
   <title>Магічны шар прадказанняў</title>
   <style>
-    body {
+    html, body {
       margin: 0;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #252525;
-      font-family: Arial, sans-serif;
+      padding: 0;
+      overflow: hidden;
+      background-color: #111;
     }
-
-    #ball {
-      width: 300px;
-      height: 300px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #4a4a4a 0%, #000 70%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
-      cursor: pointer;
-      transition: transform 0.3s;
-    }
-
-    #ball:active {
-      transform: scale(0.96);
-    }
-
-    #triangle {
-      width: 0;
-      height: 0;
-      border-left: 110px solid transparent;
-      border-right: 110px solid transparent;
-      border-bottom: 190px solid #1770d8;
-      position: relative;
-    }
-
-    #answer-box {
+    #canvas {
       position: absolute;
-      top: 45px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 140px;
-      height: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 5px;
+      top: 0;
+      left: 0;
+      z-index: 1;
     }
-
-    #answer {
-      font-size: 14px;
-      font-weight: bold;
-      color: white;
-      line-height: 1.2;
-      word-wrap: break-word;
-      opacity: 1;
-      transition: opacity 0.3s;
+    #window-mask {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      pointer-events: none;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    #triangle-svg {
+      display: block;
+      margin: auto;
+      pointer-events: auto;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div id="ball">
-    <div id="triangle">
-      <div id="answer-box">
-        <div id="answer">Націсні<br>на шар</div>
-      </div>
-    </div>
+  <canvas id="canvas"></canvas>
+  <div id="window-mask">
+    <svg id="triangle-svg" viewBox="-1 -1 2 2" preserveAspectRatio="xMidYMid meet">
+      <polygon id="inner-triangle"
+               points="0,-0.9 0.78,0.45 -0.78,0.45"
+               fill="#1770d8"/>
+      <text id="answer-text"
+            x="0"
+            y="0"
+            text-anchor="middle"
+            fill="white"
+            font-weight="bold"
+            dominant-baseline="middle">
+      </text>
+    </svg>
   </div>
-
   <script>
     const answers = [
-     "Бясспрэчна", "Прадвырашана", "Ніякіх сумневаў", "Вызначана так", "Можаш спадзявацца", "Як я бачу – так", 
-"Верагодней за ўсё", "Добрыя перспектывы", "Знакі кажуць - так", "Так", "Пакуль не ясна, паспрабуй зноў", 
-"Спытай пазней", "Лепш не цяпер", "Цяпер нельга прадказаць", "Сканцэнтруйся і спытай зноў", 
-"Нават не думай", "Мой адказ - не", "Па маіх дадзеных - не", "Перспектывы не вельмі", "Вельмі сумнеўна","Тужык тут быў"
+      "Бясспрэчна", "Прадвырашана", "Ніякіх сумневаў", "Вызначана так", "Можаш спадзявацца",
+      "Як я бачу – так", "Верагодней за ўсё", "Добрыя перспектывы", "Знакі кажуць - так", "Так",
+      "Пакуль не ясна, паспрабуй зноў", "Спытай пазней", "Лепей не цяпер", "Цяпер нельга прадказаць",
+      "Сканцэнтруйся і спытай зноў", "Нават не думай", "Мой адказ - не", "Па маіх дадзеных - не",
+      "Перспектывы - ня вельмі", "Вельмі сумнеўна", "Тужык тут быў", "Націсні на шар"
     ];
+    const answerElem = document.querySelector("#answer-text");
 
-    const answerElem = document.getElementById("answer");
-    const ball = document.getElementById("ball");
-
-    ball.addEventListener("click", () => {
+    document.getElementById("triangle-svg").addEventListener("click", () => {
       answerElem.style.opacity = 0;
       setTimeout(() => {
         const random = answers[Math.floor(Math.random() * answers.length)];
-        answerElem.innerHTML = random.length > 20 ? random.replace(" ", "<br>") : random;
+        // Ачыстка
+        answerElem.innerHTML = "";
+
+        // Дынамічнае змяненне памеру шрыфта
+        const baseFontSize = 0.2;
+        const fontSize = baseFontSize * (12 / random.length); // Изменяем размер шрифта в зависимости от длины текста
+
+        answerElem.textContent = random;
+        answerElem.setAttribute("font-size", fontSize);
         answerElem.style.opacity = 1;
       }, 250);
     });
+
+    window.onload = function () {
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const minSide = Math.min(canvas.width, canvas.height);
+      const radius = (minSide * 0.75) / 2;
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const hatchRadius = radius * Math.sqrt(0.35);
+      const innerWindowRadius = hatchRadius * 0.85;
+      const mask = document.getElementById("window-mask");
+      const svg = document.getElementById("triangle-svg");
+      const svgSize = innerWindowRadius * 2;
+      mask.style.width = svgSize + "px";
+      mask.style.height = svgSize + "px";
+      svg.setAttribute("width", svgSize);
+      svg.setAttribute("height", svgSize);
+
+      // Фон
+      ctx.fillStyle = "#222";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Градыент шару
+      const gradient = ctx.createRadialGradient(
+        centerX - radius * 0.3,
+        centerY - radius * 0.3,
+        radius * 0.1,
+        centerX,
+        centerY,
+        radius
+      );
+      gradient.addColorStop(0, '#444');
+      gradient.addColorStop(1, '#000');
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Цень
+      ctx.save();
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+      ctx.beginPath();
+      ctx.arc(centerX, centerY + radius * 0.3, radius * 0.9, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+      ctx.fill();
+      ctx.restore();
+
+      // Люк
+      const hatchGradient = ctx.createRadialGradient(
+        centerX - hatchRadius * 0.3,
+        centerY - hatchRadius * 0.3,
+        hatchRadius * 0.1,
+        centerX,
+        centerY,
+        hatchRadius
+      );
+      hatchGradient.addColorStop(0, '#e0e0e0');
+      hatchGradient.addColorStop(1, '#999');
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, hatchRadius, 0, Math.PI * 2);
+      ctx.fillStyle = hatchGradient;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, hatchRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Празрыстае акно
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, innerWindowRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Блакітнае шкло
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, innerWindowRadius, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 200, 255, 0.1)';
+      ctx.fill();
+    };
+
+    window.onresize = function () {
+      location.reload();
+    };
   </script>
 </body>
 </html>
