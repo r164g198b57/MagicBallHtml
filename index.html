@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Магічны шар</title>
+  <link rel="icon" type="image/svg+xml" href="b011.svg">
   <style>
     html, body {
       margin: 0;
@@ -24,32 +25,75 @@
       z-index: 2;
       pointer-events: none;
       border-radius: 50%;
-      overflow: hidden;
+      overflow: hidden; /* Абразаем змесціва па змаўчанні*/
+    }
+    #triangle-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      cursor: pointer;
+      z-index: 3;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.1s ease-in-out;
     }
     #triangle-svg {
       display: block;
       margin: auto;
-      pointer-events: auto;
-      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .shake {
+      animation: shake-animation 0.5s ease-in-out;
+    }
+    @keyframes shake-animation {
+      0% { transform: translate(-50%, -50%) translate(0, 0) rotate(0); }
+      10% { transform: translate(-50%, -50%) translate(-5px, -5px) rotate(-1deg); }
+      20% { transform: translate(-50%, -50%) translate(5px, 5px) rotate(1deg); }
+      30% { transform: translate(-50%, -50%) translate(-5px, 5px) rotate(-1deg); }
+      40% { transform: translate(-50%, -50%) translate(5px, -5px) rotate(1deg); }
+      50% { transform: translate(-50%, -50%) translate(-5px, -5px) rotate(-1deg); }
+      60% { transform: translate(-50%, -50%) translate(5px, 5px) rotate(1deg); }
+      70% { transform: translate(-50%, -50%) translate(-5px, 5px) rotate(-1deg); }
+      80% { transform: translate(-50%, -50%) translate(5px, -5px) rotate(1deg); }
+      90% { transform: translate(-50%, -50%) translate(-5px, 0) rotate(-1deg); }
+      100% { transform: translate(-50%, -50%) translate(0, 0) rotate(0); }
+    }
+    .triangle-shake {
+      animation: triangle-shake 0.5s ease-in-out;
+    }
+    @keyframes triangle-shake {
+      0% { transform: translate(-50%, -50%) scale(1) translate(0, 0) rotate(0); }
+      15% { transform: translate(-50%, -50%) scale(1.3) translate(-8px, -6px) rotate(-3deg); }
+      30% { transform: translate(-50%, -50%) scale(1.3) translate(8px, 6px) rotate(3deg); }
+      45% { transform: translate(-50%, -50%) scale(1.3) translate(-8px, 6px) rotate(-3deg); }
+      60% { transform: translate(-50%, -50%) scale(1.3) translate(8px, -6px) rotate(3deg); }
+      75% { transform: translate(-50%, -50%) scale(1.3) translate(-5px, 0) rotate(-2deg); }
+      90% { transform: translate(-50%, -50%) scale(1.3) translate(5px, 0) rotate(2deg); }
+      100% { transform: translate(-50%, -50%) scale(1) translate(0, 0) rotate(0); }
     }
   </style>
 </head>
 <body>
   <canvas id="canvas"></canvas>
   <div id="window-mask">
-    <svg id="triangle-svg" viewBox="-1 -1 2 2" preserveAspectRatio="xMidYMid meet">
-      <polygon id="inner-triangle"
-               points="0,-0.9 0.78,0.45 -0.78,0.45"
-               fill="#1770d8"/>
-      <text id="answer-text"
-            x="0"
-            y="-0.1"
-            text-anchor="middle"
-            fill="white"
-            font-weight="bold"
-            dominant-baseline="middle">
-      </text>
-    </svg>
+    <div id="triangle-container">
+      <svg id="triangle-svg" viewBox="-1 -1 2 2" preserveAspectRatio="xMidYMid meet">
+        <polygon id="inner-triangle"
+                 points="0,-0.9 0.78,0.45 -0.78,0.45"
+                 fill="#1770d8"/>
+        <text id="answer-text"
+              x="0"
+              y="-0.1"
+              text-anchor="middle"
+              fill="white"
+              font-weight="bold"
+              dominant-baseline="middle">
+        </text>
+      </svg>
+    </div>
   </div>
   <script>
     const answers = [
@@ -60,6 +104,8 @@
       "Перспектывы - ня вельмі", "Вельмі сумнеўна", "Тужык тут быў"
     ];
     const answerElem = document.querySelector("#answer-text");
+    const windowMask = document.getElementById("window-mask");
+    const triangleContainer = document.getElementById("triangle-container");
 
     // Функцыя для разбіцця тэксту на радкі з пераносам
     function wrapTextInTriangle(text, maxWidthChars) {
@@ -112,7 +158,7 @@
       }
 
       let fontSize = 0.12; // Пачатковы памер шрыфта
-      const lineHeight = '1.1em'; // Вышыня радка
+      const lineHeight = '1.1em'; // Вышыня радку
 
       createMultilineText(lines, lineHeight);
       answerElem.setAttribute("font-size", fontSize);
@@ -120,7 +166,23 @@
       return fontSize;
     }
 
-    document.getElementById("triangle-svg").addEventListener("click", () => {
+    // Функцыя для запуску анімацыі трасяніны
+    function startShakeAnimation() {
+      // Дадаем класы анімацыі
+      windowMask.classList.add('shake');
+      triangleContainer.classList.add('triangle-shake');
+      
+      // Выдаляем класы праз 0.5 секунды (працягласць анімацыі)
+      setTimeout(() => {
+        windowMask.classList.remove('shake');
+        triangleContainer.classList.remove('triangle-shake');
+      }, 500);
+    }
+
+    triangleContainer.addEventListener("click", () => {
+      // Запускаем анімацыю трасяніны
+      startShakeAnimation();
+      
       answerElem.style.opacity = 0;
       setTimeout(() => {
         const random = answers[Math.floor(Math.random() * answers.length)];
@@ -144,14 +206,18 @@
       const innerWindowRadius = hatchRadius * 0.85;
       const mask = document.getElementById("window-mask");
       const svg = document.getElementById("triangle-svg");
-      const svgSize = innerWindowRadius * 2;
-      mask.style.width = svgSize + "px";
-      mask.style.height = svgSize + "px";
-      svg.setAttribute("width", svgSize);
-      svg.setAttribute("height", svgSize);
+      
+      // Памеры маскі і кантэйнеру
+      const containerSize = innerWindowRadius * 2;
+      mask.style.width = containerSize + "px";
+      mask.style.height = containerSize + "px";
+      triangleContainer.style.width = containerSize + "px";
+      triangleContainer.style.height = containerSize + "px";
+      svg.setAttribute("width", containerSize);
+      svg.setAttribute("height", containerSize);
 
       // Фон
-      ctx.fillStyle = "#222";
+      ctx.fillStyle = "#444";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Градыент шару
@@ -171,14 +237,14 @@
       ctx.fill();
 
       // Цень
-      ctx.save();
+	  ctx.save();
       ctx.shadowBlur = 20;
       ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
       ctx.beginPath();
       ctx.arc(centerX, centerY + radius * 0.3, radius * 0.9, 0, Math.PI * 2);
       ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
       ctx.fill();
-      ctx.restore();
+      ctx.restore(); 
 
       // Люк
       const hatchGradient = ctx.createRadialGradient(
@@ -201,7 +267,7 @@
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Празрыстае акно
+      //Празрыстае акно (зараз ствараем маску)
       ctx.save();
       ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
