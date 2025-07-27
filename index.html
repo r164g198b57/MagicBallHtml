@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="be">
 <head>
   <meta charset="UTF-8" />
-  <title>Магічны шар прадказанняў</title>
+  <title>Магічны шар</title>
   <style>
     html, body {
       margin: 0;
@@ -43,7 +43,7 @@
                fill="#1770d8"/>
       <text id="answer-text"
             x="0"
-            y="0"
+            y="-0.1"
             text-anchor="middle"
             fill="white"
             font-weight="bold"
@@ -57,22 +57,75 @@
       "Як я бачу – так", "Верагодней за ўсё", "Добрыя перспектывы", "Знакі кажуць - так", "Так",
       "Пакуль не ясна, паспрабуй зноў", "Спытай пазней", "Лепей не цяпер", "Цяпер нельга прадказаць",
       "Сканцэнтруйся і спытай зноў", "Нават не думай", "Мой адказ - не", "Па маіх дадзеных - не",
-      "Перспектывы - ня вельмі", "Вельмі сумнеўна", "Тужык тут быў", "Націсні на шар"
+      "Перспектывы - ня вельмі", "Вельмі сумнеўна", "Тужык тут быў"
     ];
     const answerElem = document.querySelector("#answer-text");
+
+    // Функцыя для разбіцця тэксту на радкі з пераносам
+    function wrapTextInTriangle(text, maxWidthChars) {
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = '';
+
+      for (let word of words) {
+        if ((currentLine + ' ' + word).length <= maxWidthChars || currentLine === '') {
+          currentLine = currentLine ? currentLine + ' ' + word : word;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+
+      return lines;
+    }
+
+    // Функцыя для стварэння шматрадковага тэксту ў SVG
+    function createMultilineText(lines, lineHeight) {
+      // Чысцім папярэдні тэкст
+      while (answerElem.firstChild) {
+        answerElem.removeChild(answerElem.firstChild);
+      }
+
+      // Ствараем tspan для кожнага радка
+      lines.forEach((line, index) => {
+        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspan.textContent = line;
+        tspan.setAttribute('x', '0');
+        tspan.setAttribute('dy', index === 0 ? '0' : lineHeight);
+        answerElem.appendChild(tspan);
+      });
+    }
+
+    // Функцыя для падбору аптымальнага памеру шрыфта
+    function fitTextInTriangle(text) {
+      const maxWidthChars = 12; // Максімальная колькасць літар у радку
+      const lines = wrapTextInTriangle(text, maxWidthChars);
+      const maxLines = 3; // Максімальная колькасць радкоў
+      
+      // Калі радкоў больш максімальнага, аб'ядноўваем апошнія радкі
+      if (lines.length > maxLines) {
+        const lastLine = lines.slice(maxLines - 1).join(' ');
+        lines.splice(maxLines - 1, lines.length, lastLine);
+      }
+
+      let fontSize = 0.12; // Пачатковы памер шрыфта
+      const lineHeight = '1.1em'; // Вышыня радка
+
+      createMultilineText(lines, lineHeight);
+      answerElem.setAttribute("font-size", fontSize);
+
+      return fontSize;
+    }
 
     document.getElementById("triangle-svg").addEventListener("click", () => {
       answerElem.style.opacity = 0;
       setTimeout(() => {
         const random = answers[Math.floor(Math.random() * answers.length)];
-        // Ачыстка
-        answerElem.innerHTML = "";
-
-        // Дынамічнае змяненне памеру шрыфта
-        const baseFontSize = 0.2;
-        const fontSize = baseFontSize * (12 / random.length); // Изменяем размер шрифта в зависимости от длины текста
-
-        answerElem.textContent = random;
+        
+        const fontSize = fitTextInTriangle(random);
         answerElem.setAttribute("font-size", fontSize);
         answerElem.style.opacity = 1;
       }, 250);
@@ -161,6 +214,9 @@
       ctx.arc(centerX, centerY, innerWindowRadius, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(0, 200, 255, 0.1)';
       ctx.fill();
+
+      // Усталёўваем пачатковы тэкст
+      fitTextInTriangle("Націсні на шар");
     };
 
     window.onresize = function () {
